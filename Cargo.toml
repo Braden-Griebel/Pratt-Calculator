@@ -1,6 +1,11 @@
 [package]
 name = "pratt_calculator"
 version = "0.1.0"
+authors = ["Braden Griebel <bgriebel@uw.edu>"]
+description = "A simple calculator using build using Pratt parsing"
+readme = "README.md"
+homepage = "https://github.com/Braden-Griebel/Pratt-Calculator"
+license = "MIT"
 edition = "2024"
 
 [dependencies]
