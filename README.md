@@ -12,7 +12,7 @@ prefix, postfix expressions and paranthesis
 is a great blog post about implementing a Pratt parser.
 If you're interested in more about parsing/programming
 languages I recommend [Crafting Interpreters](https://craftinginterpreters.com/)
-by Robert Nystromg. 
+by Robert Nystrom. 
 
 
 # Usage
