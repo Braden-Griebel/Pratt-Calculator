@@ -9,20 +9,20 @@ use anyhow::{Context, Result, anyhow};
 use super::parser::{PrattParser, SExpr, SExprAtom};
 
 /// A Tree Walk interpreter
-struct Interpreter {
+pub(crate) struct Interpreter {
     environment: HashMap<String, f64>,
 }
 
 impl Interpreter {
     /// Create a new interpreter with an empty environment
-    fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Interpreter {
             environment: HashMap::new(),
         }
     }
 
     /// Interpret a program represented as a string
-    fn interpret(&mut self, input: &str) -> Result<f64> {
+    pub(crate) fn interpret(&mut self, input: &str) -> Result<f64> {
         let program_sexpr = PrattParser::parse(input)
             .context("Trying to parse input into S-expression for interpretation")?;
         self.interpret_sexpr(program_sexpr)

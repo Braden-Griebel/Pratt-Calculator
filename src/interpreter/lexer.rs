@@ -223,28 +223,28 @@ impl Lexer {
         self.current_position >= self.input.len()
     }
 
-    /// Check whether the current character is a letter
-    fn is_alpha(&self) -> Result<bool> {
-        Ok((self
-            .input
-            .get(self.current_position)
-            .ok_or(anyhow!("Lexer continued parsing past end of the input")))?
-        .is_alphabetic())
-    }
+    // /// Check whether the current character is a letter
+    // fn is_alpha(&self) -> Result<bool> {
+    //     Ok((self
+    //         .input
+    //         .get(self.current_position)
+    //         .ok_or(anyhow!("Lexer continued parsing past end of the input")))?
+    //     .is_alphabetic())
+    // }
 
-    /// Check whether the current character is a number
-    fn is_numeric(&self) -> Result<bool> {
-        Ok((self
-            .input
-            .get(self.current_position)
-            .ok_or(anyhow!("Lexer continued past end of the input")))?
-        .is_numeric())
-    }
+    // /// Check whether the current character is a number
+    // fn is_numeric(&self) -> Result<bool> {
+    //     Ok((self
+    //         .input
+    //         .get(self.current_position)
+    //         .ok_or(anyhow!("Lexer continued past end of the input")))?
+    //     .is_numeric())
+    // }
 
-    /// Check whether the current character is alphanumeric
-    fn is_alphanumeric(&self) -> Result<bool> {
-        Ok(self.is_alpha()? && self.is_numeric()?)
-    }
+    // /// Check whether the current character is alphanumeric
+    // fn is_alphanumeric(&self) -> Result<bool> {
+    //     Ok(self.is_alpha()? && self.is_numeric()?)
+    // }
 
     /// Check whether the current character is a valid variable character
     fn is_valid_var(&self) -> Result<bool> {
