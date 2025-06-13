@@ -26,7 +26,8 @@ fn main() -> Result<()> {
                 * (multiplication)
                 / (division)
                 ^ (exponentiation)
-            as well as paranenthesis, and simple variable assignment (try `myvariable=3`).  
+            as well as paranenthesis, and simple variable assignment.
+            Thank you for trying out Pratt Calculator! 
         "
     );
     println!("Version {}", env!("CARGO_PKG_VERSION"));
