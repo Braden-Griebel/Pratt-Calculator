@@ -104,7 +104,7 @@ impl Lexer {
                 .context("Failed to get next character during lexing")?;
             match cur_char {
                 // Match all the operators
-                '(' | ')' | '*' | '/' | '+' | '-' | '^' => self.tokens.push(
+                '(' | ')' | '*' | '/' | '+' | '-' | '^' | '!' | '=' => self.tokens.push(
                     Token::new_op(cur_char)
                         .context("Unable to create new operator token during lexing")?,
                 ),

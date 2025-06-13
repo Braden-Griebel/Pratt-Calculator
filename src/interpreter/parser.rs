@@ -8,6 +8,7 @@ use anyhow::{Context, Result, anyhow};
 use super::lexer::{AtomType, Lexer, Token};
 
 /// An S-expression
+#[derive(Clone, Debug)]
 pub(crate) enum SExpr {
     Atom(SExprAtom),
     Cons(SExprAtom, Vec<SExpr>),
@@ -31,6 +32,7 @@ impl fmt::Display for SExpr {
 }
 
 /// An S-expression atom
+#[derive(Clone, Debug)]
 pub(crate) enum SExprAtom {
     /// An operation such as +, -, etc.
     Op(char),
@@ -127,7 +129,7 @@ impl PrattParser {
                 }
 
                 // Otherwise, consume the Token holding the operator
-                self.consume();
+                self.consume()?;
 
                 // Then update the lhs to add the postfix oepration
                 lhs = SExpr::Cons(SExprAtom::Op(op), vec![lhs]);
@@ -233,6 +235,48 @@ impl PrattParser {
     /// Consume the next token, returning nothing
     fn consume(&mut self) -> Result<()> {
         _ = self.pop();
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod test_parser {
+    use super::*;
+
+    #[test]
+    fn test_atom_parsing() -> Result<()> {
+        let program = "3.14";
+        let parsed_res = PrattParser::parse(program)?;
+        match parsed_res {
+            SExpr::Atom(seatom) => match seatom {
+                SExprAtom::Number(num) => {
+                    if num == 3.14f64 {
+                        return Ok(());
+                    } else {
+                        return Err(anyhow!("Incorrect atom value found!"));
+                    }
+                }
+                _ => return Err(anyhow!("Incorrect atom type found!")),
+            },
+            _ => return Err(anyhow!("Incorrect S-expression type found!")),
+        }
+    }
+
+    #[test]
+    fn test_simple_expression_parsing() -> Result<()> {
+        let program = "3 + 4";
+        let parsed_res = PrattParser::parse(program)?;
+        let expected = "(+ 3 4)";
+        assert_eq!(parsed_res.to_string(), expected);
+        Ok(())
+    }
+
+    #[test]
+    fn test_operator_precedence() -> Result<()> {
+        let program = "3+5*6";
+        let parsed_res = PrattParser::parse(program)?;
+        let expected = "(+ 3 (* 5 6))";
+        assert_eq!(parsed_res.to_string(), expected);
         Ok(())
     }
 }
