@@ -1,5 +1,5 @@
 // Standard Library Uses
-use std::{fmt, num, sync::atomic};
+use std::fmt;
 
 // External Crate Uses
 use anyhow::{Context, Result, anyhow};
@@ -31,7 +31,7 @@ impl fmt::Display for SExpr {
 }
 
 /// An S-expression atom
-enum SExprAtom {
+pub(crate) enum SExprAtom {
     /// An operation such as +, -, etc.
     Op(char),
     /// A variable identifier
@@ -71,11 +71,139 @@ impl PrattParser {
     }
 
     fn parse_min_bp(&mut self, min_bp: u8) -> Result<SExpr> {
-        todo!()
+        // "Priming the pumnp"
+        // Parsing the initial characters to get things started,
+        // Setting up the lhs, and the rhs will be parsed
+        // through the loop below
+        let mut lhs = match self
+            .pop()
+            .context("Tried to pop next token during parsing")?
+        {
+            Token::Atom(at) => match at {
+                AtomType::Number(n) => SExpr::Atom(SExprAtom::Number(n)),
+                AtomType::Variable(varname) => SExpr::Atom(SExprAtom::Variable(varname)),
+            },
+            Token::Op('(') => {
+                let lhs = self.parse_min_bp(0u8)?;
+                if self.pop()? != Token::Op(')') {
+                    return Err(anyhow!("Unmatched paranthesis encountered during parsing"));
+                }
+                lhs
+            }
+            Token::Op(op) => {
+                let ((), bp) = Self::prefix_binding_power(&op).context(
+                    "Trying to determine binding power of first token encountered in Pratt Parser",
+                )?;
+                let rhs = self.parse_min_bp(bp)?;
+                SExpr::Cons(SExprAtom::Op(op), vec![rhs])
+            }
+            t => return Err(anyhow!("Encountered bad token during parsing {t}")),
+        };
+
+        // Parse the rhs of the above expression
+        loop {
+            // Start by checking the next character, if it is an EOF Break
+            // If it is an operator that will be further processed
+            // Otherwise, it's a parsing error
+            let op = match self
+                .peek()
+                .context("Peeking next token during rhs parsing loop")?
+            {
+                Token::EOF => break,
+                Token::Op(op) => op,
+                t => {
+                    return Err(anyhow!(
+                        "Encountered unknown token {t} during rhs parsing loop"
+                    ));
+                }
+            };
+
+            // Start by seeing if this operator may be a postfix operator
+            if let Some((pf_bp, ())) = Self::postfix_binding_power(&op) {
+                // If the postfix binding power is too low,
+                // the loop should be broken as parsing has finished
+                if pf_bp < min_bp {
+                    break;
+                }
+
+                // Otherwise, consume the Token holding the operator
+                self.consume();
+
+                // Then update the lhs to add the postfix oepration
+                lhs = SExpr::Cons(SExprAtom::Op(op), vec![lhs]);
+
+                // Now that the lhs has been updated, continue to the
+                // next iteration
+                continue;
+            }
+
+            // If the operation is not a postfix operator,
+            // process it as an infix operator
+            if let Some((l_bp, r_bp)) = Self::infix_binding_power(&op) {
+                // Check if the binding power is too low
+                if l_bp < min_bp {
+                    // Note: Since we are binding it to the left expression,
+                    // only the l_bp is of interest
+                    break;
+                }
+                // Consume the token since it is an infix operator
+                self.consume()?;
+
+                // Process the rhs
+                lhs = {
+                    let rhs = self.parse_min_bp(r_bp).context(
+                        "Failed to parse right hand side of infix operator during parsing",
+                    )?;
+                    SExpr::Cons(SExprAtom::Op(op), vec![lhs, rhs])
+                };
+
+                // Now that the lhs has been updated, continue to the
+                // next iteration
+                continue;
+            }
+
+            // The parsing has now finished, so break the loop
+            break;
+        }
+
+        Ok(lhs)
     }
 }
 
 // Operator Binding Powers
+impl PrattParser {
+    /// Determine the infix binding power of the operator
+    /// represented by c
+    fn infix_binding_power(c: &char) -> Option<(u8, u8)> {
+        match c {
+            '=' => Some((2, 1)),
+            '+' | '-' => Some((3, 4)),
+            '^' => Some((6, 5)),
+            '*' | '/' => Some((7, 8)),
+            _ => None,
+        }
+    }
+
+    /// Determine the prefix binding power of the operator
+    /// represented by c
+    fn prefix_binding_power(c: &char) -> Result<((), u8)> {
+        match c {
+            '+' | '-' => Ok(((), 9)),
+            _ => Err(anyhow!(
+                "Character {c} does not have an associated prefix binding power"
+            )),
+        }
+    }
+
+    /// Determine the postfix binding power of the operator
+    /// represented by c
+    fn postfix_binding_power(c: &char) -> Option<(u8, ())> {
+        match c {
+            '!' => Some((11, ())),
+            _ => None,
+        }
+    }
+}
 
 // Utility functions for the Parser
 impl PrattParser {

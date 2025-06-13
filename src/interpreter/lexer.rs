@@ -1,4 +1,5 @@
 // Standard Library Uses
+use std::fmt;
 use std::mem::take;
 
 // External Crate Uses
@@ -12,6 +13,19 @@ pub(crate) enum Token {
     Op(char),
     Atom(AtomType),
     EOF,
+}
+
+impl fmt::Display for Token {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Token::Op(c) => write!(f, "{}", c),
+            Token::Atom(at) => match at {
+                AtomType::Number(n) => write!(f, "{}", n),
+                AtomType::Variable(varname) => write!(f, "{}", varname),
+            },
+            Token::EOF => write!(f, "EOF"),
+        }
+    }
 }
 
 impl Token {
@@ -90,7 +104,7 @@ impl Lexer {
                 .context("Failed to get next character during lexing")?;
             match cur_char {
                 // Match all the operators
-                '(' | ')' | '*' | '/' | '+' | '-' => self.tokens.push(
+                '(' | ')' | '*' | '/' | '+' | '-' | '^' => self.tokens.push(
                     Token::new_op(cur_char)
                         .context("Unable to create new operator token during lexing")?,
                 ),
